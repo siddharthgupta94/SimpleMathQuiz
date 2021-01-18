@@ -1,12 +1,13 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
-import Quiz from './Quiz/Quiz'
+import React from "react";
+import "./App.css";
+import Quiz from "./Quiz/Quiz";
+import QuizForm from "./QuizForm/QuizForm";
 
 function App() {
   return (
     <div className="App">
-      <Quiz/>
+      <QuizForm />
+      <QuizForm />
     </div>
   );
 }

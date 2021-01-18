@@ -1,67 +1,97 @@
-import React, { useState, useEffect } from 'react';
-import './Quiz.css';
+import React, { useState, useEffect } from "react";
+import "./Quiz.css";
+import Problem from "../Problem/Problem";
+import Results from "../Results/Results";
 
 function Quiz(props) {
+  const { numberOfProblems, range, operators } = props;
+
   const [state, setState] = useState({
     hasStarted: true,
     hasFinished: false,
-    problemCount: 1,
-    range: 10,
+    problemCount: 0,
     currentScore: 0,
-    operators: ['+', '-', '*', '/'],
-    expression: null,
-    userInput: null
+    expressions: [],
+    userInput: "",
+    answers: [],
   });
+
+  let {
+    problemCount,
+    expressions,
+    hasFinished,
+    currentScore,
+    userInput,
+    answers,
+  } = state;
 
   useEffect(() => {
     const generateExpression = () => {
-      const { operators, range } = state;
-
-      const operand1 = Math.floor(Math.random() * (range));
-      const operand2 = Math.floor(Math.random() * (range));
-      const operator = operand2 !== 0 ? operators[Math.floor(Math.random() * 4)] : operators[Math.floor(Math.random() * 3)];
+      const operand1 = Math.floor(Math.random() * range);
+      const operand2 = Math.floor(Math.random() * range);
+      const operator = operators[Math.floor(Math.random() * operators.length)];
+      if (operand2 === 0) {
+        while (operator == "/") {
+          operator = operators[Math.floor(Math.random() * operators.length)];
+        }
+      }
       const exp = `${operand1} ${operator} ${operand2}`;
       return exp;
-    }
+    };
 
-    let exp = generateExpression();
-    setState((prev) => ({ ...prev, expression: exp }));
-  }, [state.problemCount]);
+    expressions.push(generateExpression());
+    setState((prev) => ({ ...prev, expressions: expressions }));
+  }, [problemCount]);
 
   const handleChange = ({ target }) => {
-    const value = parseInt(target.value);
-    if (typeof value === 'number') {
-      setState(prev => ({ ...prev, userInput: value }));
-    }
-  }
+    const value = target.value;
+    setState((prev) => ({ ...prev, userInput: value }));
+  };
 
-  const evaluateExpression = () => parseInt(eval(state.expression)) === state.userInput;
+  const evaluateExpression = () =>
+    // eslint-disable-next-line
+    parseInt(eval(expressions[problemCount])) === parseInt(userInput);
 
   const handleNext = () => {
-    let { hasFinished, problemCount, currentScore } = state;
-    problemCount++;
     const isCorrect = evaluateExpression();
+    answers.push({
+      expression: expressions[problemCount],
+      isCorrect: isCorrect,
+    });
     currentScore = isCorrect ? currentScore + 1 : currentScore;
-    hasFinished = !(problemCount <= 20);
-    console.log(currentScore);
-    if(hasFinished) {
-      setState(prev => ({...prev, hasFinished: hasFinished, currentScore: currentScore}));
+    if (problemCount === numberOfProblems - 1) {
+      setState((prev) => ({
+        ...prev,
+        hasFinished: true,
+        currentScore: currentScore,
+      }));
     } else {
-      setState(prev => ({...prev, currentScore: currentScore, problemCount: problemCount}));
+      problemCount++;
+      setState((prev) => ({
+        ...prev,
+        userInput: "",
+        currentScore: currentScore,
+        problemCount: problemCount,
+      }));
     }
-  }
+  };
 
   return (
     <div className="Quiz">
       <h1>Simple Math Quiz</h1>
-      <div className="Problem">
-        <h3>Problem {state.problemCount}</h3>
-        <p>What is the result of {state.expression}?</p>
-        <input value={state.userInput} onChange={handleChange} />
-      <button className="Quiz-next" onClick={handleNext}>Next</button>
-      </div>
-      <div className="Score">
-        <h3>Score : {state.currentScore}</h3>
+      <Problem
+        style={{ visibility: hasFinished && "hidden" }}
+        count={problemCount + 1}
+        exp={expressions[problemCount]}
+        userInput={userInput}
+        handleChange={handleChange}
+        handleNext={handleNext}
+      />
+      <div className="Results">
+        <h3>
+          {hasFinished && "Final"} Score : {state.currentScore}
+        </h3>
+        {hasFinished && <Results answers={answers} />}
       </div>
     </div>
   );
